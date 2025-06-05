@@ -1,115 +1,134 @@
-# Fact Model (GPT-2 or Phi-2) Fine-Tuning and Inference
+# 🧠 Fact Generator
 
-This package allows you to fine-tune GPT-2 or Phi-2 on a newline-delimited list of "facts" and serve them through a FastAPI server.
-
----
-
-## 🚀 Model Choice: GPT-2 vs Phi-2
-
-Set the environment variable:
-
-- `MODEL_TYPE=gpt2`
-- `MODEL_TYPE=phi2`
+Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-separated "facts". Generate new facts via a local web interface, retrain the model, and explore generation settings—all from your own machine.
 
 ---
 
-## 🐳 Docker Setup
+## 📦 What’s Included
 
-### Build the Docker Image
-```bash
-docker build -t fact-model .
-```
-
-### Run Fine-Tuning
-```bash
-docker run --gpus all --rm -v ${PWD}:/workspace -e MODEL_TYPE=gpt2 fact-model bash -c "python prepare_dataset.py && python train_fact_model.py"
-```
-
-### Start the Server
-```bash
-docker run --gpus all -v ${PWD}:/workspace -e MODEL_TYPE=gpt2 -p 8000:8000 fact-model python fact_server.py
-```
+- `facts.txt` – Your dataset (one fact per line)
+- `prepare_dataset.py` – Converts `facts.txt` into model-ready format
+- `train_fact_model.py` – Trains the model (GPT-2 or Phi-2)
+- `fact_server.py` – Runs a FastAPI server for generation, retraining, stats
+- `index.html` – Minimal web UI for fact generation and model control
+- `model-config.json` – Touch this file to trigger a live reload
+- Setup scripts: `setup.sh`, `setup.ps1`, `retrain.sh`, `retrain.ps1`
+- Docker support: `Dockerfile`, `docker-compose.yml`
 
 ---
 
-## 🧱 Docker Compose Setup (Recommended)
+## 🧰 Requirements
 
-### Start the Server
-```bash
-docker-compose up --build
-```
-
-### Run Fine-Tuning
-```bash
-docker-compose run retrain
-```
+- A machine with a **CUDA-capable GPU**
+- Python 3.10+
+- pip or Docker
 
 ---
 
-## 🖥️ Local Linux Setup
+## 🪟 Windows Setup
 
-Run:
+### 🔧 Without Docker (Command Line)
 
-```bash
-chmod +x setup.sh
-./setup.sh
-source venv/bin/activate
-python prepare_dataset.py
-python train_fact_model.py
-python fact_server.py
-```
-
----
-
-## 📅 Cron Setup (Linux)
-
-Add this line to your crontab (`crontab -e`):
-
-```
-0 3 * * 1 cd /path/to/your/project && ./retrain.sh >> cron.log 2>&1
-```
-
-This retrains every Monday at 3 AM.
-
----
-
-## 📅 Windows Task Scheduler Setup
-
-1. Open Task Scheduler
-2. Create Basic Task → Set schedule
-3. Action → Start a program:
-   ```
-   powershell.exe
-   ```
-4. Arguments:
-   ```
-   -ExecutionPolicy Bypass -File "C:\Path\To\retrain.ps1"
+1. Run PowerShell:
+   ```powershell
+   Set-ExecutionPolicy Bypass -Scope Process -Force
+   .\setup.ps1
    ```
 
----
+2. Activate the virtual environment:
 
-## 🔁 Auto-Reloading
+   ```powershell
+   .\venv\Scripts\Activate.ps1
+   ```
 
-The FastAPI server monitors `model-config.json`. When it's touched (e.g., via retrain), the model is automatically reloaded without restarting the server.
+3. Train and run:
 
----
+   ```powershell
+   python prepare_dataset.py
+   python train_fact_model.py
+   python fact_server.py
+   ```
 
-## 🧪 Example API Call
-
-**POST** `http://localhost:8000/generate`
-```json
-{
-  "prompt": "Fact:\n",
-  "max_tokens": 32,
-  "temperature": 1.0
-}
-```
+4. Open `index.html` in your browser.
 
 ---
 
-## 📄 Files
+### 🐳 With Docker
 
-- `facts.txt`: Your newline-delimited facts
-- `setup.sh`, `setup.ps1`: Setup scripts
-- `retrain.sh`, `retrain.ps1`: Retraining scripts
-- `model-config.json`: Touch this file to trigger a model reload
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+2. Build and run:
+
+   ```powershell
+   docker-compose up --build
+   ```
+
+3. Open `index.html` in your browser.
+
+---
+
+## 🐧 Linux Setup
+
+### 🔧 Without Docker (Command Line)
+
+1. Set up the environment:
+
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   source venv/bin/activate
+   ```
+
+2. Train and run:
+
+   ```bash
+   python prepare_dataset.py
+   python train_fact_model.py
+   python fact_server.py
+   ```
+
+3. Open `index.html` in your browser.
+
+---
+
+### 🐳 With Docker
+
+1. Build and run:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Open `index.html` in your browser.
+
+---
+
+## 🧪 Features
+
+* 🔁 Live reload after training (no restart needed)
+* 💬 Generate new facts from custom prompts
+* 📈 Live logs from retraining (via server-sent events)
+* 🌓 Dark-mode web UI (zero dependencies)
+* 🔧 Choose model (`gpt2` or `phi2`) before training
+* 🧠 Use sliders for temperature, token count, and more (optional extensions)
+
+---
+
+## ✅ Usage Tips
+
+* To add new facts: edit `facts.txt`, then click **Retrain** in the UI
+* To change model: set `MODEL_TYPE=gpt2` or `MODEL_TYPE=phi2` in the environment or UI
+* To force reload manually: touch `model-config.json` or click **Reload** in the UI
+* To reset output: refresh the browser or clear the UI fields
+
+---
+
+## ⚠️ Notes
+
+* This setup assumes you have at least 6–8 GB of GPU VRAM for Phi-2
+* For GPT-2, smaller VRAM (\~2 GB) may be sufficient
+* Trained model checkpoints are saved to `./fact-model/`
+
+---
+
+Enjoy generating your own knowledge base! 🧠✨
