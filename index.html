@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><title>Fact Generator UI</title>
+<style>
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: sans-serif;
+    }
+    input, button {
+        background-color: #1e1e1e;
+        color: #ffffff;
+        border: 1px solid #444;
+        padding: 5px;
+        margin: 5px 0;
+    }
+    pre, label {
+        color: #ccc;
+    }
+    h1, h2 {
+        color: #ffffff;
+    }
+    button:hover {
+        background-color: #333;
+    }
+</style>
+
+</head>
+<body>
+<h1>Fact Generator</h1>
+
+<section>
+    <h2>Generate Fact</h2>
+    <input type="text" id="prompt" style="width: 300px;">
+    <button onclick="generate()">Generate</button>
+    <pre id="result" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></pre>
+</section>
+
+<section>
+    <h2>Reload Model</h2>
+    <button onclick="reloadModel()">Reload</button>
+    <div id="reloadStatus"></div>
+</section>
+
+<section>
+    <h2>Facts File</h2>
+    <button onclick="loadFacts()">View facts.txt</button>
+    <pre id="factsContent" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: scroll;"></pre>
+</section>
+
+<section>
+    <h2>Retrain Model</h2>
+    <label>Model Type: <input type="text" id="retrainModelType" value="phi2"></label>
+    <button onclick="retrain()">Retrain</button>
+    <div id="trainingBadge" style="display:inline-block; margin-left:10px; font-weight:bold;"></div>
+    <pre id="retrainStatus" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; max-height: 200px; overflow-y: scroll;"></pre>
+</section>
+
+<section>
+    <h2>Model Stats</h2>
+    <button onclick="loadStats()">Refresh Stats</button>
+    <pre id="stats" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></pre>
+</section>
+
+<script>
+function generate() {
+    const prompt = document.getElementById("prompt").value;
+    fetch("http://localhost:8000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt, max_tokens: 32, temperature: 1.0 })
+    })
+    .then(res => res.json())
+    .then(data => document.getElementById("result").textContent = data.text)
+    .catch(err => document.getElementById("result").textContent = "Error: " + err);
+}
+
+function reloadModel() {
+    fetch("http://localhost:8000/reload", { method: "POST" })
+    .then(res => res.json())
+    .then(data => document.getElementById("reloadStatus").textContent = data.status)
+    .catch(err => document.getElementById("reloadStatus").textContent = "Error: " + err);
+}
+
+function loadFacts() {
+    fetch("facts.txt")
+    .then(res => res.text())
+    .then(text => document.getElementById("factsContent").textContent = text)
+    .catch(err => document.getElementById("factsContent").textContent = "Error: " + err);
+}
+
+function retrain() {
+    const modelType = document.getElementById("retrainModelType").value;
+    const output = document.getElementById("retrainStatus");
+    const badge = document.getElementById("trainingBadge");
+    output.textContent = "";
+    badge.textContent = "Training…";
+    badge.style.color = "orange";
+
+    function connectStream() {
+        const eventSource = new EventSource("http://localhost:8000/retrain-stream?model_type=" + encodeURIComponent(modelType));
+        eventSource.onmessage = function(event) {
+            output.textContent += event.data + "\n";
+            output.scrollTop = output.scrollHeight;
+            if (event.data.includes("Retrain complete")) {
+                badge.textContent = "Done";
+                badge.style.color = "green";
+                eventSource.close();
+            }
+        };
+        eventSource.onerror = function() {
+            badge.textContent = "Retrying…";
+            badge.style.color = "gray";
+            eventSource.close();
+            setTimeout(connectStream, 3000);
+        };
+    }
+
+    connectStream();
+}
+
+function loadStats() {
+    fetch("http://localhost:8000/stats")
+    .then(res => res.json())
+    .then(stats => {
+        document.getElementById("stats").textContent =
+            "Model Type: " + stats.model_type + "\nLast Reload: " + stats.last_reload;
+    })
+    .catch(err => {
+        document.getElementById("stats").textContent = "Error: " + err;
+    });
+}
+</script>
+</body>
+</html>
