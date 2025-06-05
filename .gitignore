@@ -60,3 +60,9 @@ index.html.save
 
 # Auto-generated metadata
 model-config.json
+
+facts_dataset/
+err.txt
+prepared_facts.txt
+facts.txt
+cached_*.txt
