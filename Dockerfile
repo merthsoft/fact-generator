@@ -1,9 +1,24 @@
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM python:3.10-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
 
-RUN apt update && apt install -y python3-pip git &&     pip3 install --upgrade pip &&     pip3 install torch transformers datasets accelerate peft bitsandbytes fastapi uvicorn
+# Install system dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+# Pre-copy requirements to cache pip layer
+COPY requirements.txt .
 
-CMD [ "bash" ]
+# Install Python dependencies first to leverage Docker caching
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+# Preload models to prevent runtime downloads (optional)
+RUN python -c "from transformers import AutoTokenizer, AutoModelForCausalLM;     AutoTokenizer.from_pretrained('gpt2'); AutoModelForCausalLM.from_pretrained('gpt2')"
+
+# Expose port
+EXPOSE 8000
+
+# Run server
+CMD ["python", "fact_server.py"]
