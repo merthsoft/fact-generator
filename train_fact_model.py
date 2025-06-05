@@ -1,2 +1,1 @@
-# NOTE: fp16 removed for AMD/CPU compatibility
-# Add your training logic here.
+fp16=torch.cuda.is_available(),  # Use AMP only with CUDA
