@@ -36,13 +36,11 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
    ```
 
 2. Activate the virtual environment:
-
    ```powershell
-   .\venv\Scripts\Activate.ps1
+   .env\Scripts\Activate.ps1
    ```
 
 3. Train and run:
-
    ```powershell
    python prepare_dataset.py
    python train_fact_model.py
@@ -58,7 +56,6 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 2. Build and run:
-
    ```powershell
    docker-compose up --build
    ```
@@ -72,7 +69,6 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 ### 🔧 Without Docker (Command Line)
 
 1. Set up the environment:
-
    ```bash
    chmod +x setup.sh
    ./setup.sh
@@ -80,7 +76,6 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
    ```
 
 2. Train and run:
-
    ```bash
    python prepare_dataset.py
    python train_fact_model.py
@@ -94,7 +89,6 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 ### 🐳 With Docker
 
 1. Build and run:
-
    ```bash
    docker-compose up --build
    ```
@@ -105,29 +99,29 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 
 ## 🧪 Features
 
-* 🔁 Live reload after training (no restart needed)
-* 💬 Generate new facts from custom prompts
-* 📈 Live logs from retraining (via server-sent events)
-* 🌓 Dark-mode web UI (zero dependencies)
-* 🔧 Choose model (`gpt2` or `phi2`) before training
-* 🧠 Use sliders for temperature, token count, and more (optional extensions)
+- 🔁 Live reload after training (no restart needed)
+- 💬 Generate new facts from custom prompts
+- 📈 Live logs from retraining (via server-sent events)
+- 🌓 Dark-mode web UI (zero dependencies)
+- 🔧 Choose model (`gpt2` or `phi2`) before training
+- 🧠 Use sliders for temperature, token count, and more (optional extensions)
 
 ---
 
 ## ✅ Usage Tips
 
-* To add new facts: edit `facts.txt`, then click **Retrain** in the UI
-* To change model: set `MODEL_TYPE=gpt2` or `MODEL_TYPE=phi2` in the environment or UI
-* To force reload manually: touch `model-config.json` or click **Reload** in the UI
-* To reset output: refresh the browser or clear the UI fields
+- To add new facts: edit `facts.txt`, then click **Retrain** in the UI
+- To change model: set `MODEL_TYPE=gpt2` or `MODEL_TYPE=phi2` in the environment or UI
+- To force reload manually: touch `model-config.json` or click **Reload** in the UI
+- To reset output: refresh the browser or clear the UI fields
 
 ---
 
 ## ⚠️ Notes
 
-* This setup assumes you have at least 6–8 GB of GPU VRAM for Phi-2
-* For GPT-2, smaller VRAM (\~2 GB) may be sufficient
-* Trained model checkpoints are saved to `./fact-model/`
+- This setup assumes you have at least 6–8 GB of GPU VRAM for Phi-2
+- For GPT-2, smaller VRAM (~2 GB) may be sufficient
+- Trained model checkpoints are saved to `./fact-model/`
 
 ---
 
