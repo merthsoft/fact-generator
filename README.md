@@ -1,123 +1,115 @@
-# Fact Generator: Train Your Own GPT-2 or Phi-2 Model on Custom Facts
+# Fact Model (GPT-2 or Phi-2) Fine-Tuning and Inference
 
-This project allows you to fine-tune a small language model (GPT-2 or Phi-2) on a newline-delimited list of "facts". It includes a simple web UI to test generation, trigger retraining, and inspect the model.
-
----
-
-## 📁 Folder Contents
-
-- `facts.txt` — Your list of facts (one per line).
-- `train_fact_model.py` — Trains the model using your facts.
-- `prepare_dataset.py` — Converts `facts.txt` into a dataset.
-- `fact_server.py` — REST API for generation, retraining, and stats.
-- `index.html` — Local web UI (open in browser).
-- `model-config.json` — Triggers live model reloads when touched.
-- `setup.ps1` / `setup.sh` — One-time environment setup.
-- `retrain.ps1` / `retrain.sh` — Manual retraining helpers.
-- `Dockerfile` / `docker-compose.yml` — Docker support.
+This package allows you to fine-tune GPT-2 or Phi-2 on a newline-delimited list of "facts" and serve them through a FastAPI server.
 
 ---
 
-## 🖥️ Windows Instructions
+## 🚀 Model Choice: GPT-2 vs Phi-2
 
-### 🔧 CLI Setup (no Docker)
+Set the environment variable:
 
-1. Run PowerShell:
-   ```powershell
-   Set-ExecutionPolicy Bypass -Scope Process -Force
-   ./setup.ps1
-   ```
-
-2. Activate the environment:
-   ```powershell
-   venv\Scripts\Activate.ps1
-   ```
-
-3. Train and run:
-   ```powershell
-   python prepare_dataset.py
-   python train_fact_model.py
-   python fact_server.py
-   ```
-
-4. Open `index.html` in your browser.
-
-### 🐳 Docker on Windows
-
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-
-2. Build the image:
-   ```powershell
-   docker build -t fact-model .
-   ```
-
-3. Start the server:
-   ```powershell
-   docker-compose up --build
-   ```
-
-4. Open `index.html` in your browser.
+- `MODEL_TYPE=gpt2`
+- `MODEL_TYPE=phi2`
 
 ---
 
-## 🐧 Linux Instructions
+## 🐳 Docker Setup
 
-### 🔧 CLI Setup (no Docker)
+### Build the Docker Image
+```bash
+docker build -t fact-model .
+```
 
-1. Run setup:
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   source venv/bin/activate
-   ```
+### Run Fine-Tuning
+```bash
+docker run --gpus all --rm -v ${PWD}:/workspace -e MODEL_TYPE=gpt2 fact-model bash -c "python prepare_dataset.py && python train_fact_model.py"
+```
 
-2. Train and run:
-   ```bash
-   python prepare_dataset.py
-   python train_fact_model.py
-   python fact_server.py
-   ```
-
-3. Open `index.html` in your browser.
-
-### 🐳 Docker on Linux
-
-1. Build the image:
-   ```bash
-   docker build -t fact-model .
-   ```
-
-2. Start the server:
-   ```bash
-   docker-compose up --build
-   ```
-
-3. Open `index.html` in your browser.
+### Start the Server
+```bash
+docker run --gpus all -v ${PWD}:/workspace -e MODEL_TYPE=gpt2 -p 8000:8000 fact-model python fact_server.py
+```
 
 ---
 
-## 🧪 Features
+## 🧱 Docker Compose Setup (Recommended)
 
-- Live text generation using your trained model
-- Prompt-based fact generation (e.g. "cats", "science")
-- Full retraining with new facts or new model type
-- Real-time retraining logs in UI (via SSE)
-- Model reload without restart
-- Web UI with dark mode
+### Start the Server
+```bash
+docker-compose up --build
+```
 
----
-
-## 🔄 Tips
-
-- To retrain: edit `facts.txt`, then click “Retrain” in the UI
-- To change model: use dropdown in UI or set `MODEL_TYPE` env var (`gpt2` or `phi2`)
-- To force reload: touch `model-config.json` or use `/reload` in the UI
+### Run Fine-Tuning
+```bash
+docker-compose run retrain
+```
 
 ---
 
-## 📦 Notes
+## 🖥️ Local Linux Setup
 
-- GPU is required for training and serving
-- Model checkpoints are saved in `fact-model/`
-- Live model reload is based on file timestamp, not content
+Run:
 
+```bash
+chmod +x setup.sh
+./setup.sh
+source venv/bin/activate
+python prepare_dataset.py
+python train_fact_model.py
+python fact_server.py
+```
+
+---
+
+## 📅 Cron Setup (Linux)
+
+Add this line to your crontab (`crontab -e`):
+
+```
+0 3 * * 1 cd /path/to/your/project && ./retrain.sh >> cron.log 2>&1
+```
+
+This retrains every Monday at 3 AM.
+
+---
+
+## 📅 Windows Task Scheduler Setup
+
+1. Open Task Scheduler
+2. Create Basic Task → Set schedule
+3. Action → Start a program:
+   ```
+   powershell.exe
+   ```
+4. Arguments:
+   ```
+   -ExecutionPolicy Bypass -File "C:\Path\To\retrain.ps1"
+   ```
+
+---
+
+## 🔁 Auto-Reloading
+
+The FastAPI server monitors `model-config.json`. When it's touched (e.g., via retrain), the model is automatically reloaded without restarting the server.
+
+---
+
+## 🧪 Example API Call
+
+**POST** `http://localhost:8000/generate`
+```json
+{
+  "prompt": "Fact:\n",
+  "max_tokens": 32,
+  "temperature": 1.0
+}
+```
+
+---
+
+## 📄 Files
+
+- `facts.txt`: Your newline-delimited facts
+- `setup.sh`, `setup.ps1`: Setup scripts
+- `retrain.sh`, `retrain.ps1`: Retraining scripts
+- `model-config.json`: Touch this file to trigger a model reload

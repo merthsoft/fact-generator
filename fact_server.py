@@ -15,14 +15,18 @@ model_name = "fact-model"
 
 model_lock = threading.Lock()
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name).cuda().eval()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(device).eval()
 last_modified = os.path.getmtime("model-config.json")
 
 def reload_model():
     global model, tokenizer, last_modified
     with model_lock:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name).cuda().eval()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(device).eval()
         last_modified = os.path.getmtime("model-config.json")
 
 def watcher():
@@ -45,9 +49,24 @@ class GenerateRequest(BaseModel):
 
 @app.post("/generate")
 def generate(req: GenerateRequest):
+    try:
+        with model_lock:
+            prompt = f"Fact about {req.prompt.strip()}:" if req.prompt.strip().lower() != "fact:" else "Fact:"
+            inputs = tokenizer(prompt + "\n", return_tensors="pt").to(model.device)
+            output = model.generate(
+                **inputs,
+                max_new_tokens=req.max_tokens,
+                temperature=req.temperature,
+                do_sample=True,
+                top_p=0.95
+            )
+            result = tokenizer.decode(output[0], skip_special_tokens=True)
+            return {"text": result.strip()}
+    except Exception as e:
+        return {"error": str(e)}
     with model_lock:
         prompt = f"Fact about {req.prompt.strip()}:" if req.prompt.strip().lower() != "fact:" else "Fact:"
-        inputs = tokenizer(prompt + "\n", return_tensors="pt").to("cuda")
+        inputs = tokenizer(prompt + "\n", return_tensors="pt").to(model.device)
         output = model.generate(
             **inputs,
             max_new_tokens=req.max_tokens,
@@ -72,6 +91,24 @@ def stats():
 
 @app.get("/retrain-stream")
 def retrain_stream(model_type: str = "phi2"):
+    def event_stream():
+        if not os.path.exists("train_fact_model.py"):
+            yield "data: ERROR: Training script missing\n\n"
+            return
+        proc = subprocess.Popen(
+            ["python", "train_fact_model.py"],
+            env={**os.environ, "MODEL_TYPE": model_type},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        for line in proc.stdout:
+            yield f"data: {line.strip()}\n\n"
+        proc.wait()
+        os.utime("model-config.json", None)
+        yield "event: done\ndata: Retrain complete\n\n"
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
     def event_stream():
         proc = subprocess.Popen(
             ["python", "train_fact_model.py"],
