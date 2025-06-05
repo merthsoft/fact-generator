@@ -1,0 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+.env/
+.envrc
+
+# Jupyter Notebooks checkpoints (if any)
+.ipynb_checkpoints
+
+# Model outputs
+fact-model/
+*.bin
+*.pt
+*.safetensors
+
+# Logs and runtime files
+*.log
+*.tmp
+*.pid
+
+# Datasets and cache
+*.cache/
+*.dataset_cache/
+*.tokenizer_cache/
+*.h5
+*.jsonl
+
+# Hugging Face cache
+~/.cache/huggingface
+~/.huggingface
+
+# VSCode settings
+.vscode/
+
+# macOS, Linux, Windows OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker artifacts
+*.tar
+*.img
+*.container
+*.pid
+docker-compose.override.yml
+
+# Python distribution
+*.egg
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+
+# HTML output cache
+index.html.save
+
+# Auto-generated metadata
+model-config.json
