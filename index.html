@@ -65,7 +65,7 @@
 <script>
 function generate() {
     const prompt = document.getElementById("prompt").value;
-    fetch("http://localhost:8000/generate", {
+    fetch("/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: prompt, max_tokens: 32, temperature: 1.0 })
@@ -76,7 +76,7 @@ function generate() {
 }
 
 function reloadModel() {
-    fetch("http://localhost:8000/reload", { method: "POST" })
+    fetch("/reload", { method: "POST" })
     .then(res => res.json())
     .then(data => document.getElementById("reloadStatus").textContent = data.status)
     .catch(err => document.getElementById("reloadStatus").textContent = "Error: " + err);
@@ -93,14 +93,19 @@ function retrain() {
     const modelType = document.getElementById("retrainModelType").value;
     const output = document.getElementById("retrainStatus");
     const badge = document.getElementById("trainingBadge");
-    output.textContent = "";
+    output.textContent = ""; document.getElementById("result").textContent = "";
     badge.textContent = "Training…";
     badge.style.color = "orange";
 
     function connectStream() {
-        const eventSource = new EventSource("http://localhost:8000/retrain-stream?model_type=" + encodeURIComponent(modelType));
+        const eventSource = new EventSource("/retrain-stream?model_type=" + encodeURIComponent(modelType));
+    eventSource.addEventListener("done", function() {
+        badge.textContent = "Done"; badge.style.color = "green";
+        eventSource.close();
+    });
         eventSource.onmessage = function(event) {
             output.textContent += event.data + "\n";
+        output.scrollTop = output.scrollHeight;
             output.scrollTop = output.scrollHeight;
             if (event.data.includes("Retrain complete")) {
                 badge.textContent = "Done";
@@ -120,7 +125,7 @@ function retrain() {
 }
 
 function loadStats() {
-    fetch("http://localhost:8000/stats")
+    fetch("/stats")
     .then(res => res.json())
     .then(stats => {
         document.getElementById("stats").textContent =
