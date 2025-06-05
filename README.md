@@ -19,9 +19,28 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 
 ## 🧰 Requirements
 
-- A machine with a **CUDA-capable GPU**
 - Python 3.10+
 - pip or Docker
+- A GPU is recommended (see below)
+
+---
+
+## ⚙️ Supported Hardware
+
+### ✅ NVIDIA GPU (CUDA)
+
+Fully supported. Used automatically if detected.
+
+### 🟠 AMD GPU (ROCm/CPU)
+
+- This setup automatically falls back to CPU if CUDA is unavailable.
+- Compatible with ROCm-based PyTorch builds, but does not require them.
+- All functionality works on CPU, but will be **slower**, especially for Phi-2.
+
+Verify which device is in use:
+```python
+print("Using device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
+```
 
 ---
 
@@ -105,6 +124,7 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 - 🌓 Dark-mode web UI (zero dependencies)
 - 🔧 Choose model (`gpt2` or `phi2`) before training
 - 🧠 Use sliders for temperature, token count, and more (optional extensions)
+- 🖥 Works with NVIDIA GPUs, AMD GPUs (ROCm), or CPU fallback
 
 ---
 
@@ -119,9 +139,9 @@ Fine-tune a small language model (GPT-2 or Phi-2) on a list of simple, newline-s
 
 ## ⚠️ Notes
 
-- This setup assumes you have at least 6–8 GB of GPU VRAM for Phi-2
-- For GPT-2, smaller VRAM (~2 GB) may be sufficient
-- Trained model checkpoints are saved to `./fact-model/`
+- Phi-2 training on CPU may take hours to complete—use GPT-2 if resources are limited
+- Checkpoints are saved to `./fact-model/`
+- You can change the training cadence using OS-level scheduling (e.g. `cron`, `Task Scheduler`)
 
 ---
 
