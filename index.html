@@ -34,7 +34,7 @@
 
   <script>
     async function generate() {
-      const prompt = document.getElementById('prompt').value || "Tell me a fact.";
+      const prompt = document.getElementById('prompt').value;
       document.getElementById('result').innerText = "Generating...";
       try {
         const response = await fetch('/generate?prompt=' + encodeURIComponent(prompt));

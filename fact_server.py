@@ -22,13 +22,19 @@ tokenizer = AutoTokenizer.from_pretrained(
     local_files_only=True
 )
 
-@app.get("/")
-def root():
-    return {"message": "Fact Generator API"}
+@app.get("/", response_class=HTMLResponse)
+def serve_ui():
+    if os.path.exists("index.html"):
+        return FileResponse("index.html")
+    return HTMLResponse("<html><body><h1>UI not found</h1></body></html>", status_code=404)
 
 @app.get("/generate")
-def generate(prompt: str = "Fact: "):
-    prompt = prompt or "Fact: "
+def generate(prompt: str = ""):
+    if prompt.strip():
+        prompt = f"{prompt.strip()}"
+    else:
+        prompt = "atm"
+
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     with torch.no_grad():
         outputs = model.generate(
@@ -39,14 +45,9 @@ def generate(prompt: str = "Fact: "):
                     top_p=0.95,
                     temperature=0.8
                 )
-    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return {"result": text}
-
-@app.get("/ui", response_class=HTMLResponse)
-def serve_ui():
-    if os.path.exists("index.html"):
-        return FileResponse("index.html")
-    return HTMLResponse("<html><body><h1>UI not found</h1></body></html>", status_code=404)
+    output_text = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+    first_fact = output_text.split("\n")[0]
+    return {"result": first_fact}
 
 @app.get("/reload")
 def reload_model():
